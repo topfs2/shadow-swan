@@ -1,10 +1,11 @@
 # shadow-swan
-# About
+## About
 Physically based rendering with HDR lighting (both IBL and point lights) and bloom.
 
-# Build
+## Build
 cmake .
+
 make
 
-# Credits
+## Credits
 None of the textures or models are made by me, and are owned by the respective artists and may be under a different license than this source code
