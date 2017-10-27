@@ -29,14 +29,18 @@ PBRScene::PBRScene() : BaseScene()
     m_brdf = ImagePtr(new Image("resources/textures/brdfLUT.png"));
 
     m_fsQuad = GeometryFactory::quad(glm::vec2(2.0f));
-    m_geometry = ModelLoader::loadGeometries("resources/gltf2/DamagedHelmet/DamagedHelmet.gltf")[0];
     m_cube = GeometryFactory::cube(glm::vec3(1.0f));
 
-    m_albedo = ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_albedo.jpg"));
-    m_AO = ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_AO.jpg"));
-    m_emissive = ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_emissive.jpg"));
-    m_metalRoughness = ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_metalRoughness.jpg"));
-    m_normal = ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_normal.jpg"));
+    m_helmet = MeshPtr(new Mesh(
+        ModelLoader::loadGeometries("resources/gltf2/DamagedHelmet/DamagedHelmet.gltf")[0],
+        MaterialPtr(new Material(
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_albedo.jpg")),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_metalRoughness.jpg")),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_AO.jpg")),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_normal.jpg")),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_emissive.jpg"))
+        ))
+    ));
 }
 
 PBRScene::~PBRScene()
@@ -118,17 +122,15 @@ void PBRScene::OnRender(float t, float dt)
         m_pbrShader->uniform("lightColors[" + std::to_string(i) + "]", lightColors[i]);
     }
 
-    ibl.irradiance->bind(5);
-    ibl.radiance->bind(6);
-    m_brdf->bind(7);
+    ibl.skybox->bind(0);
+    ibl.irradiance->bind(1);
+    ibl.radiance->bind(2);
+    m_brdf->bind(3);
 
-    m_pbrShader->uniform("irradianceSampler", 5);
-    m_pbrShader->uniform("radianceSampler", 6);
-    m_pbrShader->uniform("brdfSampler", 7);
-
-    ibl.skybox->bind(8);
-    m_pbrShader->uniform("skyboxSampler", 8);
-
+    m_pbrShader->uniform("skyboxSampler", 0);
+    m_pbrShader->uniform("irradianceSampler", 1);
+    m_pbrShader->uniform("radianceSampler", 2);
+    m_pbrShader->uniform("brdfSampler", 3);
 
     m_pbrShader->uniform("useIBL", m_useIBL);
     m_pbrShader->uniform("useCheapIBL", m_useCheapIBL);
@@ -141,21 +143,7 @@ void PBRScene::OnRender(float t, float dt)
         model = glm::rotate(model, 3.14f / 2.0f, glm::vec3(1, 0, 0));
         //model = glm::rotate(model, t * 0.2f, glm::vec3(1.0f, 1.0f, 1.0f));
 
-        m_pbrShader->uniform("model", model);
-
-        m_albedo->bind(0);
-        m_AO->bind(1);
-        m_emissive->bind(2);
-        m_metalRoughness->bind(3);
-        m_normal->bind(4);
-
-        m_pbrShader->uniform("material.albedoSampler", 0);
-        m_pbrShader->uniform("material.AOSampler", 1);
-        m_pbrShader->uniform("material.emissiveSampler", 2);
-        m_pbrShader->uniform("material.metalRoughnessSampler", 3);
-        m_pbrShader->uniform("material.normalSampler", 4);
-
-        m_geometry->draw();
+        m_helmet->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, model, 4);
     }
 
     for (int i = 0; i < m_lights; i++) {

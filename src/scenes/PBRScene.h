@@ -4,6 +4,7 @@
 #include "../Image.h"
 #include "../FrameBuffer.h"
 #include "../Geometry.h"
+#include "../Mesh.h"
 #include "../Shader.h"
 
 class PBRScene : public BaseScene
@@ -57,13 +58,8 @@ private:
     ImagePtr m_gPongOutput;
     FrameBufferPtr m_pongFramebuffer;
 
-    GeometryPtr m_geometry;
     GeometryPtr m_fsQuad;
     GeometryPtr m_cube;
 
-    ImagePtr m_albedo;
-    ImagePtr m_AO;
-    ImagePtr m_emissive;
-    ImagePtr m_metalRoughness;
-    ImagePtr m_normal;
+    MeshPtr m_helmet;
 };

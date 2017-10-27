@@ -30,7 +30,7 @@ FIND_PACKAGE(Threads REQUIRED)
 
 set(LIBRARIES ${GLFW3_LIBRARIES} ${GLEW_LIBRARIES} ${GLU_LIBRARIES} ${GL_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
-set(SOURCES src/Cubemap.cpp src/FrameBuffer.cpp src/ModelLoader.cpp src/Geometry.cpp src/GeometryData.cpp src/GeometryFactory.cpp src/Image.cpp src/Shader.cpp src/TrackballCamera.cpp src/scenes/SceneFactory.cpp src/scenes/BaseScene.cpp src/scenes/SampleScene.cpp src/scenes/PBRScene.cpp)
+set(SOURCES src/Cubemap.cpp src/FrameBuffer.cpp src/ModelLoader.cpp src/Geometry.cpp src/GeometryData.cpp src/GeometryFactory.cpp src/Image.cpp src/Shader.cpp src/Material.cpp src/Mesh.cpp src/TrackballCamera.cpp src/scenes/SceneFactory.cpp src/scenes/BaseScene.cpp src/scenes/SampleScene.cpp src/scenes/PBRScene.cpp)
 
 add_executable(main ${SOURCES} main.cpp)
 include_directories(includes)
