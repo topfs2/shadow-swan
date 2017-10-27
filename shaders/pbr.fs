@@ -110,11 +110,7 @@ vec3 linear_sRGB(vec3 linear)
 
 void main()
 {
-#ifdef HAVE_ALBEDO_SRGB
-    vec3 albedo = sRGB_linear(texture(material.albedoSampler, fs_in.TexCoords).rgb);
-#else
     vec3 albedo = texture(material.albedoSampler, fs_in.TexCoords).rgb;
-#endif
 
 #ifdef HAVE_METAL_ROUGHNESS_SAMPLER
     vec4 metalRoughness = texture(material.metalRoughnessSampler, fs_in.TexCoords);
