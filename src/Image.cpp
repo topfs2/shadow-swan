@@ -1,8 +1,8 @@
 #include "Image.h"
 #include <stb_image.h>
 
-Image::Image(const std::string &path) : m_texture(0) {
-    refresh(path);
+Image::Image(const std::string &path, bool mipmap) : m_texture(0) {
+    refresh(path, mipmap);
 }
 
 Image::Image(unsigned int width, unsigned int height, GLenum internalFormat, GLenum format) : m_texture(0) {
@@ -21,14 +21,14 @@ Image::~Image() {
     glDeleteTextures(1, &m_texture);
 }
 
-void Image::refresh(const std::string &path)
+void Image::refresh(const std::string &path, bool mipmap)
 {
     stbi_set_flip_vertically_on_load(false);
     int width, height, bpp;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &bpp, 4);
 
     if (data) {
-        refresh(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, false);
+        refresh(width, height, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE, data, mipmap);
         stbi_image_free(data);
     }
 }
