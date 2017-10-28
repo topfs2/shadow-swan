@@ -179,9 +179,6 @@ void main()
             irradiance = texture(irradianceSampler, N).rgb;
         }
 
-#ifdef HAVE_IBL_SRGB
-        irradiance = sRGB_linear(irradiance); // TODO remove when we have linear HDR env map
-#endif
         vec3 diffuse    = irradiance * albedo;
 
         const float MAX_REFLECTION_LOD = 7.0;
@@ -192,9 +189,7 @@ void main()
         } else {
             prefilteredColor = texture(radianceSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
         }
-#ifdef HAVE_IBL_SRGB
-        prefilteredColor = sRGB_linear(prefilteredColor); // TODO remove when we have linear HDR env map
-#endif
+
         vec2 envBRDF  = texture(brdfSampler, vec2(max(dot(N, V), 0.0), roughness)).rg;
         vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
