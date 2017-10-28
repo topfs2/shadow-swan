@@ -4,20 +4,10 @@
 
 struct Material {
     sampler2D albedoSampler;
+    sampler2D metalSampler;
+    sampler2D roughnessSampler;
     sampler2D AOSampler;
     sampler2D emissiveSampler;
-
-#ifdef HAVE_METAL_ROUGHNESS_SAMPLER
-    sampler2D metalRoughnessSampler;
-#else
-#ifdef HAVE_METAL_SAMPLER
-    sampler2D metalSampler;
-#endif
-#ifdef HAVE_ROUGHNESS_SAMPLER
-    sampler2D roughnessSampler;
-#endif
-#endif
-
     sampler2D normalSampler;
 };
 
@@ -110,41 +100,24 @@ vec3 linear_sRGB(vec3 linear)
 
 void main()
 {
-    vec3 albedo = texture(material.albedoSampler, fs_in.TexCoords).rgb;
-
-#ifdef HAVE_METAL_ROUGHNESS_SAMPLER
-    vec4 metalRoughness = texture(material.metalRoughnessSampler, fs_in.TexCoords);
-    float metallic = metalRoughness.b;
-    float roughness = metalRoughness.g;
-#else
-#ifdef HAVE_METAL_SAMPLER
-    float metallic = texture(material.metalSampler, fs_in.TexCoords).r;
-#else
-    float metallic = 0.0;
-#endif
-
-#ifdef HAVE_ROUGHNESS_SAMPLER
-    float roughness = texture(material.roughnessSampler, fs_in.TexCoords).r;
-#else
-    float roughness = 0.0;
-#endif
-#endif
-
-#ifdef HAVE_EMISSIVE_SAMPLER
-    vec3 emissive = texture(material.emissiveSampler, fs_in.TexCoords).rgb;
-#ifdef HAVE_EMISSIVE_SRGB
-    emissive = sRGB_linear(emissive);
-#endif
-#endif
-
-    float ao = texture(material.AOSampler, fs_in.TexCoords).r;
-
 #ifdef HAVE_NORMAL_SAMPLER
     vec3 Normal = texture(material.normalSampler, fs_in.TexCoords).rgb;
     Normal = normalize(Normal * 2.0 - 1.0);
     Normal = normalize(fs_in.TBN * Normal);
 #else
     vec3 Normal = normalize(fs_in.Normal);
+#endif
+
+    vec3 albedo = texture(material.albedoSampler, fs_in.TexCoords).rgb;
+    float ao = texture(material.AOSampler, fs_in.TexCoords).r;
+    float metallic = texture(material.metalSampler, fs_in.TexCoords).b;
+    float roughness = texture(material.roughnessSampler, fs_in.TexCoords).g;
+
+#ifdef HAVE_EMISSIVE_SAMPLER
+    vec3 emissive = texture(material.emissiveSampler, fs_in.TexCoords).rgb;
+#ifdef HAVE_EMISSIVE_SRGB
+    emissive = sRGB_linear(emissive);
+#endif
 #endif
 
     vec3 WorldPos = fs_in.FragPos;

@@ -6,7 +6,9 @@
 class Material
 {
 public:
+    Material(ImagePtr albedo, ImagePtr metalRoughnessAO, ImagePtr normal, ImagePtr emissive);
     Material(ImagePtr albedo, ImagePtr metalRoughness, ImagePtr AO, ImagePtr normal, ImagePtr emissive);
+    Material(ImagePtr albedo, ImagePtr metal, ImagePtr roughness, ImagePtr AO, ImagePtr normal, ImagePtr emissive);
     ~Material();
 
     unsigned int use(ShaderPtr shader, GLint unit);
@@ -15,7 +17,8 @@ private:
     void bind(ShaderPtr shader, std::string type, ImagePtr texture, GLint unit);
 
     ImagePtr m_albedo;
-    ImagePtr m_metalRoughness;
+    ImagePtr m_metal;
+    ImagePtr m_roughness;
     ImagePtr m_AO;
     ImagePtr m_normal;
     ImagePtr m_emissive;
