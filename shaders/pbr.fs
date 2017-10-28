@@ -6,7 +6,7 @@ struct Material {
     sampler2D albedoSampler;
     sampler2D metalSampler;
     sampler2D roughnessSampler;
-    sampler2D AOSampler;
+    sampler2D occlusionSampler;
     sampler2D emissiveSampler;
     sampler2D normalSampler;
 };
@@ -109,7 +109,7 @@ void main()
 #endif
 
     vec3 albedo = texture(material.albedoSampler, fs_in.TexCoords).rgb;
-    float ao = texture(material.AOSampler, fs_in.TexCoords).r;
+    float occlusion = texture(material.occlusionSampler, fs_in.TexCoords).r;
     float metallic = texture(material.metalSampler, fs_in.TexCoords).b;
     float roughness = texture(material.roughnessSampler, fs_in.TexCoords).g;
 
@@ -204,9 +204,9 @@ void main()
         vec2 envBRDF  = texture(brdfSampler, vec2(max(dot(N, V), 0.0), roughness)).rg;
         vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
-        ambient = (kD * diffuse + specular) * ao;
+        ambient = (kD * diffuse + specular) * occlusion;
     } else {
-        vec3 ambient = vec3(0.03) * albedo * ao;
+        vec3 ambient = vec3(0.03) * albedo * occlusion;
     }
 
     vec3 color = ambient + Lo;

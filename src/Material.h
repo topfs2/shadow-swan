@@ -6,9 +6,9 @@
 class Material
 {
 public:
-    Material(ImagePtr albedo, ImagePtr metalRoughnessAO, ImagePtr normal, ImagePtr emissive);
-    Material(ImagePtr albedo, ImagePtr metalRoughness, ImagePtr AO, ImagePtr normal, ImagePtr emissive);
-    Material(ImagePtr albedo, ImagePtr metal, ImagePtr roughness, ImagePtr AO, ImagePtr normal, ImagePtr emissive);
+    Material(ImagePtr albedo, ImagePtr metalRoughnessOcclusion, ImagePtr normal, ImagePtr emissive);
+    Material(ImagePtr albedo, ImagePtr metalRoughness, ImagePtr occlusion, ImagePtr normal, ImagePtr emissive);
+    Material(ImagePtr albedo, ImagePtr metal, ImagePtr roughness, ImagePtr occlusion, ImagePtr normal, ImagePtr emissive);
     ~Material();
 
     unsigned int use(ShaderPtr shader, GLint unit);
@@ -19,7 +19,7 @@ private:
     ImagePtr m_albedo;
     ImagePtr m_metal;
     ImagePtr m_roughness;
-    ImagePtr m_AO;
+    ImagePtr m_occlusion;
     ImagePtr m_normal;
     ImagePtr m_emissive;
 };
