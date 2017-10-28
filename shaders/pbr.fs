@@ -112,13 +112,7 @@ void main()
     float occlusion = texture(material.occlusionSampler, fs_in.TexCoords).r;
     float metallic = texture(material.metalSampler, fs_in.TexCoords).b;
     float roughness = texture(material.roughnessSampler, fs_in.TexCoords).g;
-
-#ifdef HAVE_EMISSIVE_SAMPLER
-    vec3 emissive = texture(material.emissiveSampler, fs_in.TexCoords).rgb;
-#ifdef HAVE_EMISSIVE_SRGB
-    emissive = sRGB_linear(emissive);
-#endif
-#endif
+    vec3 emissive = sRGB_linear(texture(material.emissiveSampler, fs_in.TexCoords).rgb);
 
     vec3 WorldPos = fs_in.FragPos;
 
@@ -209,13 +203,7 @@ void main()
         vec3 ambient = vec3(0.03) * albedo * occlusion;
     }
 
-    vec3 color = ambient + Lo;
-
-#ifdef HAVE_EMISSIVE_SAMPLER
-    const float emissiveFactor = 1.0;
-    color += (emissiveFactor * emissive);
-#endif
-
+    vec3 color = ambient + Lo + emissive;
     color = tonemapAuto(color);
 
     FragColor = vec4(color, 1.0);

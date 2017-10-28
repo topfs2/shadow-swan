@@ -15,7 +15,7 @@ PBRScene::PBRScene() : BaseScene()
     m_useCheapIBL = false;
     m_whichMesh = 0;
 
-    m_pbrShader = ShaderPtr(new Shader("shaders/pbr.vs", "shaders/pbr.fs", { "MAX_LIGHTS 3", "HDR_TONEMAP", "HAVE_NORMAL_SAMPLER", "HAVE_EMISSIVE_SAMPLER", "HAVE_EMISSIVE_SRGB" }));
+    m_pbrShader = ShaderPtr(new Shader("shaders/pbr.vs", "shaders/pbr.fs", { "MAX_LIGHTS 3", "HDR_TONEMAP", "HAVE_NORMAL_SAMPLER" }));
     m_brightShader = ShaderPtr(new Shader("shaders/bright.vs", "shaders/bright.fs"));
     m_blurShader = ShaderPtr(new Shader("shaders/blur.vs", "shaders/blur.fs"));
     m_compositeShader = ShaderPtr(new Shader("shaders/composite.vs", "shaders/composite.fs", { "GAMMA_CORRECT" }));
