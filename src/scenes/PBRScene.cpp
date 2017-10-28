@@ -14,8 +14,9 @@ PBRScene::PBRScene() : BaseScene()
     m_whichIBL = 0;
     m_useCheapIBL = false;
     m_whichMesh = 0;
+    m_useNormalMapping = true;
 
-    m_pbrShader = ShaderPtr(new Shader("shaders/pbr.vs", "shaders/pbr.fs", { "MAX_LIGHTS 3", "HDR_TONEMAP", "HAVE_NORMAL_SAMPLER" }));
+    m_pbrShader = ShaderPtr(new Shader("shaders/pbr.vs", "shaders/pbr.fs", { "MAX_LIGHTS 3", "HDR_TONEMAP" }));
     m_brightShader = ShaderPtr(new Shader("shaders/bright.vs", "shaders/bright.fs"));
     m_blurShader = ShaderPtr(new Shader("shaders/blur.vs", "shaders/blur.fs"));
     m_compositeShader = ShaderPtr(new Shader("shaders/composite.vs", "shaders/composite.fs", { "GAMMA_CORRECT" }));
@@ -136,6 +137,9 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
     } else if (action == GLFW_PRESS && key == GLFW_KEY_M) {
         m_whichMesh = (m_whichMesh + 1) % m_meshes.size();
         printf("whichMesh %i\n", m_whichMesh);
+    } else if (action == GLFW_PRESS && key == GLFW_KEY_N) {
+        m_useNormalMapping = !m_useNormalMapping;
+        printf("useNormalMapping %s\n", m_useNormalMapping ? "true" : "false");
     }
 }
 
@@ -189,6 +193,7 @@ void PBRScene::OnRender(float t, float dt)
     m_pbrShader->uniform("useIBL", m_useIBL);
     m_pbrShader->uniform("useCheapIBL", m_useCheapIBL);
     m_pbrShader->uniform("tonemap", m_tonemap);
+    m_pbrShader->uniform("useNormalMapping", m_useNormalMapping);
 
     m_meshes[m_whichMesh]->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
     m_ground->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);

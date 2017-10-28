@@ -38,6 +38,7 @@ private:
     int m_lights;
     bool m_useCheapIBL;
     int m_whichMesh;
+    bool m_useNormalMapping;
 
     ShaderPtr m_pbrShader;
     ShaderPtr m_brightShader;

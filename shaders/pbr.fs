@@ -18,6 +18,7 @@ uniform sampler2D brdfSampler;
 
 uniform bool useIBL;
 uniform bool useCheapIBL;
+uniform bool useNormalMapping;
 
 uniform Material material;
 uniform vec3 viewPos;
@@ -31,11 +32,8 @@ uniform vec3 lightColors[MAX_LIGHTS];
 in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
-#ifdef HAVE_NORMAL_SAMPLER
     mat3 TBN;
-#else
     vec3 Normal;
-#endif
 } fs_in;
 
 layout (location = 0) out vec4 FragColor;
@@ -100,13 +98,13 @@ vec3 linear_sRGB(vec3 linear)
 
 void main()
 {
-#ifdef HAVE_NORMAL_SAMPLER
-    vec3 Normal = texture(material.normalSampler, fs_in.TexCoords).rgb;
-    Normal = normalize(Normal * 2.0 - 1.0);
-    Normal = normalize(fs_in.TBN * Normal);
-#else
-    vec3 Normal = normalize(fs_in.Normal);
-#endif
+    vec3 N = normalize(fs_in.Normal);
+
+    if (useNormalMapping) {
+        N = texture(material.normalSampler, fs_in.TexCoords).rgb;
+        N = normalize(N * 2.0 - 1.0);
+        N = normalize(fs_in.TBN * N);
+    }
 
     vec3 albedo = texture(material.albedoSampler, fs_in.TexCoords).rgb;
     float occlusion = texture(material.occlusionSampler, fs_in.TexCoords).r;
@@ -116,7 +114,6 @@ void main()
 
     vec3 WorldPos = fs_in.FragPos;
 
-    vec3 N = normalize(Normal);
     vec3 V = normalize(viewPos - WorldPos);
     vec3 R = -normalize(reflect(V, N));
 
