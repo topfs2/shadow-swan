@@ -37,6 +37,7 @@ private:
     int m_whichIBL;
     int m_lights;
     bool m_useCheapIBL;
+    int m_whichMesh;
 
     ShaderPtr m_pbrShader;
     ShaderPtr m_brightShader;
@@ -61,5 +62,6 @@ private:
     GeometryPtr m_fsQuad;
     GeometryPtr m_cube;
 
-    MeshPtr m_helmet;
+    std::vector<MeshPtr> m_meshes;
+    MeshPtr m_ground;
 };

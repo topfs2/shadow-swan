@@ -3,7 +3,7 @@
 
 using namespace glm;
 
-TrackballCamera::TrackballCamera() : m_target(vec3(0.0f)), m_theta(radians(180.0f)), m_phi(radians(90.0f)), m_radius(3.0f) { }
+TrackballCamera::TrackballCamera() : m_target(vec3(0.0f)), m_theta(radians(0.0f)), m_phi(radians(90.0f)), m_radius(3.0f) { }
 TrackballCamera::~TrackballCamera() { }
 
 mat4 TrackballCamera::viewMatrix()

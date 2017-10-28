@@ -13,6 +13,7 @@ PBRScene::PBRScene() : BaseScene()
     m_lights = 3;
     m_whichIBL = 0;
     m_useCheapIBL = false;
+    m_whichMesh = 0;
 
     m_pbrShader = ShaderPtr(new Shader("shaders/pbr.vs", "shaders/pbr.fs", { "MAX_LIGHTS 3", "HDR_TONEMAP", "HAVE_NORMAL_SAMPLER", "HAVE_EMISSIVE_SAMPLER", "HAVE_EMISSIVE_SRGB" }));
     m_brightShader = ShaderPtr(new Shader("shaders/bright.vs", "shaders/bright.fs"));
@@ -31,16 +32,66 @@ PBRScene::PBRScene() : BaseScene()
     m_fsQuad = GeometryFactory::quad(glm::vec2(2.0f));
     m_cube = GeometryFactory::cube(glm::vec3(1.0f));
 
-    m_helmet = MeshPtr(new Mesh(
+    ImagePtr black = ImagePtr(new Image("resources/textures/black.jpg"));
+
+    m_meshes.push_back(MeshPtr(new Mesh(
         ModelLoader::loadGeometries("resources/gltf2/DamagedHelmet/DamagedHelmet.gltf")[0],
         MaterialPtr(new Material(
-            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_albedo.jpg")),
-            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_metalRoughness.jpg")),
-            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_AO.jpg")),
-            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_normal.jpg")),
-            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_emissive.jpg"))
-        ))
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_albedo.jpg", true)),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_metalRoughness.jpg", true)),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_AO.jpg", true)),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_normal.jpg", true)),
+            ImagePtr(new Image("resources/gltf2/DamagedHelmet/Default_emissive.jpg", true))
+        )),
+        glm::rotate(glm::mat4(1.0f), 3.14f / 2.0f, glm::vec3(1.0f, 0.0f, 0.0f))
+    )));
+
+    m_meshes.push_back(MeshPtr(new Mesh(
+        ModelLoader::loadGeometries("resources/gltf2/Corset/Corset.gltf")[0],
+        MaterialPtr(new Material(
+            ImagePtr(new Image("resources/gltf2/Corset/Corset_baseColor.png", true)),
+            ImagePtr(new Image("resources/gltf2/Corset/Corset_occlusionRoughnessMetallic.png", true)),
+            ImagePtr(new Image("resources/gltf2/Corset/Corset_normal.png", true)),
+            black
+        )),
+        glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.9f, 0.0f)), glm::vec3(30.0f))
+    )));
+
+    m_meshes.push_back(MeshPtr(new Mesh(
+        ModelLoader::loadGeometries("resources/gltf2/BoomBox/BoomBox.gltf")[0],
+        MaterialPtr(new Material(
+            ImagePtr(new Image("resources/gltf2/BoomBox/BoomBox_baseColor.png", true)),
+            ImagePtr(new Image("resources/gltf2/BoomBox/BoomBox_occlusionRoughnessMetallic.png", true)),
+            ImagePtr(new Image("resources/gltf2/BoomBox/BoomBox_normal.png", true)),
+            ImagePtr(new Image("resources/gltf2/BoomBox/BoomBox_emissive.png", true))
+        )),
+        glm::scale(glm::mat4(1.0f), glm::vec3(70.0f))
+    )));
+
+    m_meshes.push_back(MeshPtr(new Mesh(
+        ModelLoader::loadGeometries("resources/gltf2/Telephone/Telephone.gltf")[0],
+        MaterialPtr(new Material(
+            ImagePtr(new Image("resources/gltf2/Telephone/Telephone_baseColor.png", true)),
+            ImagePtr(new Image("resources/gltf2/Telephone/Telephone_occlusionRoughnessMetallic.png", true)),
+            ImagePtr(new Image("resources/gltf2/Telephone/Telephone_normal.png", true)),
+            black
+        )),
+        glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.9f, 0.0f)), glm::vec3(10.0f))
+    )));
+
+    m_ground = MeshPtr(new Mesh(
+        GeometryFactory::cube(glm::vec3(8.0f, 0.5f, 8.0f)),
+        MaterialPtr(new Material(
+            ImagePtr(new Image("resources/textures/granite/graniterockface1_Base_Color.png")),
+            black,
+            ImagePtr(new Image("resources/textures/granite/graniterockface1_Roughness.png")),
+            ImagePtr(new Image("resources/textures/granite/graniterockface1_Ambient_Occlusion.png")),
+            ImagePtr(new Image("resources/textures/granite/graniterockface1_Normal.png")),
+            black
+        )),
+        glm::translate(glm::mat4(), glm::vec3(0.0f, -1.2f, 0.0f))
     ));
+
 }
 
 PBRScene::~PBRScene()
@@ -82,6 +133,9 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
     } else if (action == GLFW_PRESS && key == GLFW_KEY_P) {
         m_whichIBL = (m_whichIBL + 1) % m_ibls.size();
         printf("whichIBL %i\n", m_whichIBL);
+    } else if (action == GLFW_PRESS && key == GLFW_KEY_M) {
+        m_whichMesh = (m_whichMesh + 1) % m_meshes.size();
+        printf("whichMesh %i\n", m_whichMesh);
     }
 }
 
@@ -136,15 +190,8 @@ void PBRScene::OnRender(float t, float dt)
     m_pbrShader->uniform("useCheapIBL", m_useCheapIBL);
     m_pbrShader->uniform("tonemap", m_tonemap);
 
-    {
-        glm::mat4 model;
-
-        model = glm::rotate(model, 3.14f, glm::vec3(0, 1, 0));
-        model = glm::rotate(model, 3.14f / 2.0f, glm::vec3(1, 0, 0));
-        //model = glm::rotate(model, t * 0.2f, glm::vec3(1.0f, 1.0f, 1.0f));
-
-        m_helmet->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, model, 4);
-    }
+    m_meshes[m_whichMesh]->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
+    m_ground->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
 
     for (int i = 0; i < m_lights; i++) {
         RenderLamp(lightPositions[i], lightColors[i]);
