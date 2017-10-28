@@ -152,15 +152,15 @@ void PBRScene::OnRender(float t, float dt)
     glEnable(GL_DEPTH_TEST);
 
     glm::vec3 lightPositions[3] = {
-        glm::vec3( 0.0f, 5.0f, 0.0f),
-        glm::vec3(-3.0f, 5.0f, 0.0f),
-        glm::vec3( 3.0f, 5.0f, 0.0f)
+        glm::vec3( 0.0f, 1.5f, 0.0f),
+        glm::vec3(-2.0f, 1.0f, 0.0f),
+        glm::vec3( 2.0f, 1.0f, 0.0f)
     };
 
     glm::vec3 lightColors[3] = {
-        glm::vec3(255.0f),
-        glm::vec3(0.0f, 255.0f, 128.0f),
-        glm::vec3(255.0f, 128.0f, 0.0f)
+        glm::vec3(30.0f),
+        glm::vec3(0.0f, 30.0f, 0.0f),
+        glm::vec3(30.0f, 0.0f, 0.0f)
     };
 
     m_pbrShader->use();
