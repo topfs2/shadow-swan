@@ -39,7 +39,11 @@ private:
     bool m_useCheapIBL;
     int m_whichMesh;
     bool m_useNormalMapping;
+    bool m_useSSAO;
 
+    ShaderPtr m_geometryShader;
+    ShaderPtr m_ssaoShader;
+    ShaderPtr m_ssaoBlurShader;
     ShaderPtr m_pbrShader;
     ShaderPtr m_brightShader;
     ShaderPtr m_blurShader;
@@ -48,8 +52,22 @@ private:
     ShaderPtr m_skyboxShader;
     ShaderPtr m_lampShader;
 
+    std::vector<glm::vec3> m_ssaoKernel;
+    ImagePtr m_noiseTexture;
+    glm::vec2 m_noiseScale;
+
     std::vector<IBL> m_ibls;
     ImagePtr m_brdf;
+
+    ImagePtr m_gNormal;
+    ImagePtr m_gPosition;
+    FrameBufferPtr m_geometryFramebuffer;
+
+    ImagePtr m_ssaoInput;
+    FrameBufferPtr m_ssaoFrameBuffer;
+
+    ImagePtr m_ssao;
+    FrameBufferPtr m_ssaoBlurFrameBuffer;
 
     ImagePtr m_gColorOutput;
     FrameBufferPtr m_colorFramebuffer;

@@ -2,7 +2,9 @@
 #include "../GeometryFactory.h"
 #include "../ModelLoader.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/compatibility.hpp>
 #include <string>
+#include <random>
 #include <iostream>
 
 PBRScene::PBRScene() : BaseScene()
@@ -15,7 +17,11 @@ PBRScene::PBRScene() : BaseScene()
     m_useCheapIBL = false;
     m_whichMesh = 0;
     m_useNormalMapping = true;
+    m_useSSAO = true;
 
+    m_geometryShader = ShaderPtr(new Shader("shaders/geometry.vs", "shaders/geometry.fs"));
+    m_ssaoShader = ShaderPtr(new Shader("shaders/ssao.vs", "shaders/ssao.fs"));
+    m_ssaoBlurShader = ShaderPtr(new Shader("shaders/ssaoBlur.vs", "shaders/ssaoBlur.fs"));
     m_pbrShader = ShaderPtr(new Shader("shaders/pbr.vs", "shaders/pbr.fs", { "MAX_LIGHTS 3", "HDR_TONEMAP" }));
     m_brightShader = ShaderPtr(new Shader("shaders/bright.vs", "shaders/bright.fs"));
     m_blurShader = ShaderPtr(new Shader("shaders/blur.vs", "shaders/blur.fs"));
@@ -93,6 +99,35 @@ PBRScene::PBRScene() : BaseScene()
         glm::translate(glm::mat4(), glm::vec3(0.0f, -1.2f, 0.0f))
     ));
 
+    std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // random floats between 0.0 - 1.0
+    std::default_random_engine generator;
+    for (GLuint i = 0; i < 64; ++i)
+    {
+        glm::vec3 sample(
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator)
+        );
+        sample = glm::normalize(sample);
+        sample *= randomFloats(generator);
+        float scale = float(i) / 64.0;
+
+        scale = glm::lerp(0.1f, 1.0f, scale * scale);
+        sample *= scale;
+        m_ssaoKernel.push_back(sample);
+    }
+
+    std::vector<glm::vec3> ssaoNoise;
+    for (GLuint i = 0; i < 16; i++)
+    {
+        glm::vec3 noise(
+            randomFloats(generator) * 2.0 - 1.0,
+            randomFloats(generator) * 2.0 - 1.0,
+            0.0f);
+        ssaoNoise.push_back(noise);
+    }
+
+    m_noiseTexture = ImagePtr(new Image(4, 4, GL_RGB16F, GL_RGB, GL_FLOAT, &ssaoNoise[0], false, GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT));
 }
 
 PBRScene::~PBRScene()
@@ -112,6 +147,19 @@ void PBRScene::OnResize(unsigned int width, unsigned int height)
 
     m_gPongOutput = ImagePtr(new Image(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, NULL, false));
     m_pongFramebuffer = FrameBufferPtr(new FrameBuffer(m_gPongOutput, width, height));
+
+    m_gPosition = ImagePtr(new Image(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, NULL, false));
+    m_gNormal = ImagePtr(new Image(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, NULL, false));
+    m_geometryFramebuffer = FrameBufferPtr(new FrameBuffer({ m_gPosition, m_gNormal }, width, height));
+
+    m_ssaoInput = ImagePtr(new Image(width, height, GL_RED, GL_RGB, GL_FLOAT, NULL, false));
+    m_ssaoFrameBuffer = FrameBufferPtr(new FrameBuffer(m_ssaoInput, width, height));
+
+    m_ssao = ImagePtr(new Image(width, height, GL_RED, GL_RGB, GL_FLOAT, NULL, false));
+    m_ssaoBlurFrameBuffer = FrameBufferPtr(new FrameBuffer(m_ssao, width, height));
+
+    glm::vec2 size((float)width, (float)height);
+    m_noiseScale = size / 4.0f;
 }
 
 void PBRScene::OnKey(int key, int scancode, int action, int mode)
@@ -140,11 +188,57 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
     } else if (action == GLFW_PRESS && key == GLFW_KEY_N) {
         m_useNormalMapping = !m_useNormalMapping;
         printf("useNormalMapping %s\n", m_useNormalMapping ? "true" : "false");
+    } else if (action == GLFW_PRESS && key == GLFW_KEY_S) {
+        m_useSSAO = !m_useSSAO;
+        printf("useSSAO %s\n", m_useSSAO ? "true" : "false");
     }
 }
 
 void PBRScene::OnRender(float t, float dt)
 {
+    if (m_useSSAO) {
+        m_geometryFramebuffer->bind();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        m_geometryShader->use();
+        m_geometryShader->uniform("useNormalMapping", m_useNormalMapping);
+
+        m_meshes[m_whichMesh]->draw(m_geometryShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
+        m_ground->draw(m_geometryShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
+
+
+        m_ssaoFrameBuffer->bind();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        m_ssaoShader->use();
+
+        m_ssaoShader->uniform("gPosition", 0);
+        m_gPosition->bind(0);
+
+        m_ssaoShader->uniform("gNormal", 1);
+        m_gNormal->bind(1);
+
+        m_ssaoShader->uniform("texNoise", 2);
+        m_noiseTexture->bind(2);
+
+        m_ssaoShader->uniform("samples", m_ssaoKernel);
+        m_ssaoShader->uniform("noiseScale", m_noiseScale);
+        m_ssaoShader->uniform("projection", m_projection);
+
+        m_fsQuad->draw();
+
+        m_ssaoBlurFrameBuffer->bind();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        m_ssaoBlurShader->use();
+        m_ssaoBlurShader->uniform("ssaoInput", 0);
+        m_ssaoInput->bind(0);
+
+        m_fsQuad->draw();
+    }
+
     m_colorFramebuffer->bind();
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -245,10 +339,14 @@ void PBRScene::OnRender(float t, float dt)
 
     m_gColorOutput->bind(0);
     m_gPongOutput->bind(1);
+    m_ssao->bind(2);
 
     m_compositeShader->uniform("colorInput", 0);
     m_compositeShader->uniform("brightInput", 1);
+    m_compositeShader->uniform("ssaoSampler", 2);
+
     m_compositeShader->uniform("bloom", m_bloom);
+    m_compositeShader->uniform("useSSAO", m_useSSAO);
 
     m_fsQuad->draw();
 }
