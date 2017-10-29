@@ -14,6 +14,8 @@ struct Material {
 struct Light {
     vec3 position;
     vec3 color;
+    mat4 matrix;
+    sampler2D shadowMapSampler;
 };
 
 uniform samplerCube skyboxSampler;
@@ -28,16 +30,15 @@ uniform bool useNormalMapping;
 uniform Material material;
 uniform vec3 viewPos;
 
-#ifdef MAX_LIGHTS
 uniform int howManyLights;
 uniform Light lights[MAX_LIGHTS];
-#endif
 
 in VS_OUT {
     vec3 FragPos;
     vec2 TexCoords;
     mat3 TBN;
     vec3 Normal;
+    vec4 FragPosLightSpace[MAX_LIGHTS];
 } fs_in;
 
 layout (location = 0) out vec4 FragColor;
@@ -100,6 +101,26 @@ vec3 linear_sRGB(vec3 linear)
     return pow(linear, vec3(1.0/2.2));
 }
 
+float ShadowCalculation(vec4 fragPosLightSpace, float NdL, sampler2D shadowMap)
+{
+    // perform perspective divide
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    // Transform to [0,1] range
+    projCoords = projCoords * 0.5 + 0.5;
+    // Get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    // Get depth of current fragment from light's perspective
+    float currentDepth = projCoords.z;
+    // Check whether current frag pos is in shadow
+
+    float bias = max(0.05 * (1.0 - NdL), 0.005);
+    float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
+    //float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+
+    return shadow;
+}
+
+
 void main()
 {
     vec3 N = normalize(fs_in.Normal);
@@ -130,14 +151,12 @@ void main()
 
 #ifdef MAX_LIGHTS
     for (int i = 0; i < howManyLights; i++) {
-        Light light = lights[i];
-
         // calculate per-light radiance
-        vec3 L = normalize(light.position - WorldPos);
+        vec3 L = normalize(lights[i].position - WorldPos);
         vec3 H = normalize(V + L);
-        float distance = length(light.position - WorldPos);
+        float distance = length(lights[i].position - WorldPos);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = light.color * attenuation;
+        vec3 radiance = lights[i].color * attenuation;
 
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);
@@ -161,9 +180,10 @@ void main()
 
         // scale light by NdotL
         float NdotL = max(dot(N, L), 0.0);
+        float shadow = ShadowCalculation(fs_in.FragPosLightSpace[i], NdotL, lights[i].shadowMapSampler);
 
         // add to outgoing radiance Lo
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     }
 #endif
 

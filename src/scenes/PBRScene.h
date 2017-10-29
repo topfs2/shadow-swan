@@ -30,10 +30,12 @@ private:
     };
 
     struct Light {
-        Light(glm::vec3 _1, glm::vec3 _2) : position(_1), color(_2) { }
+        Light(glm::vec3 _1, glm::vec3 _2, FrameBufferPtr _3) : position(_1), color(_2), framebuffer(_3), active(true) { }
 
         glm::vec3 position;
         glm::vec3 color;
+        FrameBufferPtr framebuffer;
+        bool active;
     };
 
     static IBL loadIBL(std::string name);
@@ -42,12 +44,12 @@ private:
     bool m_bloom;
     bool m_useIBL;
     int m_whichIBL;
-    int m_howManyLights;
     bool m_useCheapIBL;
     int m_whichMesh;
     bool m_useNormalMapping;
     bool m_useSSAO;
 
+    ShaderPtr m_shadowDepthShader;
     ShaderPtr m_geometryShader;
     ShaderPtr m_ssaoShader;
     ShaderPtr m_ssaoBlurShader;
@@ -62,6 +64,9 @@ private:
     std::vector<glm::vec3> m_ssaoKernel;
     ImagePtr m_noiseTexture;
     glm::vec2 m_noiseScale;
+
+    unsigned int m_width;
+    unsigned int m_height;
 
     std::vector<IBL> m_ibls;
     ImagePtr m_brdf;

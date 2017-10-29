@@ -1,8 +1,18 @@
 #version 330 core
 
+struct Light {
+    vec3 position;
+    vec3 color;
+    mat4 matrix;
+    sampler2D shadowMapSampler;
+};
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+
+uniform int howManyLights;
+uniform Light lights[MAX_LIGHTS];
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 normal;
@@ -15,6 +25,7 @@ out VS_OUT {
     vec2 TexCoords;
     mat3 TBN;
     vec3 Normal;
+    vec4 FragPosLightSpace[MAX_LIGHTS];
 } vs_out;
 
 void main()
@@ -28,6 +39,10 @@ void main()
 
     vs_out.TBN = mat3(T, B, N);
     vs_out.Normal = mat3(transpose(inverse(model))) * normal;
+
+    for (int i = 0; i < howManyLights; i++) {
+        vs_out.FragPosLightSpace[i] = lights[i].matrix * vec4(vs_out.FragPos, 1.0);
+    }
 
     gl_Position = projection * view *  model * vec4(position, 1.0f);
 }

@@ -7,12 +7,13 @@
 #include <random>
 #include <iostream>
 
+#define SHADOW_SIZE 512
+
 PBRScene::PBRScene() : BaseScene()
 {
     m_tonemap = 5;
     m_bloom = true;
     m_useIBL = true;
-    m_howManyLights = 3;
     m_whichIBL = 0;
     m_useCheapIBL = false;
     m_whichMesh = 0;
@@ -20,21 +21,24 @@ PBRScene::PBRScene() : BaseScene()
     m_useSSAO = true;
 
     m_lights.push_back(Light(
-        glm::vec3(0.0f, 1.5f, 0.0f),
-        glm::vec3(30.0f)
+        glm::vec3(0.0f, 1.0f, -2.0f),
+        glm::vec3(10.0f),
+        FrameBufferPtr(new FrameBuffer(FrameBuffer::ImageVector(), ImagePtr(new Image(SHADOW_SIZE, SHADOW_SIZE, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, NULL, false)), SHADOW_SIZE, SHADOW_SIZE))
     ));
 
     m_lights.push_back(Light(
         glm::vec3(-2.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 30.0f, 0.0f)
+        glm::vec3(0.0f, 10.0f, 0.0f),
+        FrameBufferPtr(new FrameBuffer(FrameBuffer::ImageVector(), ImagePtr(new Image(SHADOW_SIZE, SHADOW_SIZE, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, NULL, false)), SHADOW_SIZE, SHADOW_SIZE))
     ));
 
     m_lights.push_back(Light(
         glm::vec3(2.0f, 1.0f, 0.0f),
-        glm::vec3(30.0f, 00.0f, 0.0f)
+        glm::vec3(10.0f, 0.0f, 0.0f),
+        FrameBufferPtr(new FrameBuffer(FrameBuffer::ImageVector(), ImagePtr(new Image(SHADOW_SIZE, SHADOW_SIZE, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, NULL, false)), SHADOW_SIZE, SHADOW_SIZE))
     ));
 
-
+    m_shadowDepthShader = ShaderPtr(new Shader("shaders/shadowDepthShader.vs", "shaders/shadowDepthShader.fs"));
     m_geometryShader = ShaderPtr(new Shader("shaders/geometry.vs", "shaders/geometry.fs"));
     m_ssaoShader = ShaderPtr(new Shader("shaders/ssao.vs", "shaders/ssao.fs"));
     m_ssaoBlurShader = ShaderPtr(new Shader("shaders/ssaoBlur.vs", "shaders/ssaoBlur.fs"));
@@ -174,15 +178,19 @@ void PBRScene::OnResize(unsigned int width, unsigned int height)
     m_ssao = ImagePtr(new Image(width, height, GL_RED, GL_RGB, GL_FLOAT, NULL, false));
     m_ssaoBlurFrameBuffer = FrameBufferPtr(new FrameBuffer(m_ssao, width, height));
 
+    m_width = width;
+    m_height = height;
+
     glm::vec2 size((float)width, (float)height);
     m_noiseScale = size / 4.0f;
 }
 
 void PBRScene::OnKey(int key, int scancode, int action, int mode)
 {
-    if (action == GLFW_PRESS && key >= GLFW_KEY_1 && key <= GLFW_KEY_6) {
-        m_tonemap = key - GLFW_KEY_1;
-        printf("tonemap %i\n", m_tonemap);
+    if (action == GLFW_PRESS && key >= GLFW_KEY_1 && key <= GLFW_KEY_3) {
+        int i = key - GLFW_KEY_1;
+        m_lights[i].active = !m_lights[i].active;
+        printf("light %i %s\n", i, m_lights[i].active ? "active" : "inactive");
     } else if (action == GLFW_PRESS && key == GLFW_KEY_I) {
         m_useIBL = !m_useIBL;
         printf("useIBL %s\n", m_useIBL ? "true" : "false");
@@ -192,9 +200,9 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
     } else if (action == GLFW_PRESS && key == GLFW_KEY_B) {
         m_bloom = !m_bloom;
         printf("bloom %s\n", m_bloom ? "true" : "false");
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_L) {
-        m_howManyLights = (m_howManyLights + 1) % (m_lights.size() + 1);
-        printf("howManyLights %i\n", m_howManyLights);
+    } else if (action == GLFW_PRESS && key == GLFW_KEY_T) {
+        m_tonemap = (m_tonemap + 1) % 6;
+        printf("tonemap %i\n", m_tonemap);
     } else if (action == GLFW_PRESS && key == GLFW_KEY_P) {
         m_whichIBL = (m_whichIBL + 1) % m_ibls.size();
         printf("whichIBL %i\n", m_whichIBL);
@@ -212,6 +220,30 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
 
 void PBRScene::OnRender(float t, float dt)
 {
+    glViewport(0, 0, SHADOW_SIZE, SHADOW_SIZE);
+
+    m_shadowDepthShader->use();
+    for (int i = 0; i < m_lights.size(); i++) {
+        Light light = m_lights[i];
+
+        if (light.active) {
+            light.framebuffer->bind();
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            GLfloat near_plane = 0.01f, far_plane = 10.0f;
+            glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, near_plane, far_plane);
+
+            glm::mat4 lightView = glm::lookAt(light.position,
+                                              glm::vec3( 0.0f, 0.0f,  0.0f),
+                                              glm::vec3( 0.0f, 1.0f,  0.0f));
+
+            m_meshes[m_whichMesh]->draw(m_shadowDepthShader, lightView, lightProjection, glm::mat4(), 0);
+            m_ground->draw(m_shadowDepthShader, lightView, lightProjection, glm::mat4(), 0);
+        }
+    }
+
+    glViewport(0, 0, 1280, 720);
+
     if (m_useSSAO) {
         m_geometryFramebuffer->bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -269,15 +301,6 @@ void PBRScene::OnRender(float t, float dt)
 
     m_pbrShader->uniform("viewPos", m_camera.position());
 
-    m_pbrShader->uniform("howManyLights", m_howManyLights);
-
-    for (int i = 0; i < m_lights.size(); i++) {
-        Light light = m_lights[i];
-        std::string prefix = "lights[" + std::to_string(i) + "].";
-        m_pbrShader->uniform(prefix + "position", light.position);
-        m_pbrShader->uniform(prefix + "color", light.color);
-    }
-
     ibl.skybox->bind(0);
     ibl.irradiance->bind(1);
     ibl.radiance->bind(2);
@@ -288,13 +311,37 @@ void PBRScene::OnRender(float t, float dt)
     m_pbrShader->uniform("radianceSampler", 2);
     m_pbrShader->uniform("brdfSampler", 3);
 
+    int howManyLights = 0;
+    for (int i = 0; i < m_lights.size(); i++) {
+        Light light = m_lights[i];
+
+        if (light.active) {
+            GLfloat near_plane = 0.01f, far_plane = 10.0f;
+            glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, near_plane, far_plane);
+
+            glm::mat4 lightView = glm::lookAt(light.position,
+                                              glm::vec3( 0.0f, 0.0f,  0.0f),
+                                              glm::vec3( 0.0f, 1.0f,  0.0f));
+
+            std::string prefix = "lights[" + std::to_string(howManyLights) + "].";
+            m_pbrShader->uniform(prefix + "position", light.position);
+            m_pbrShader->uniform(prefix + "color", light.color);
+            m_pbrShader->uniform(prefix + "matrix", lightProjection * lightView);
+            m_pbrShader->uniform(prefix + "shadowMapSampler", 4 + howManyLights);
+            light.framebuffer->getDepthAttachment()->bind(4 + howManyLights);
+            howManyLights++;
+        }
+    }
+
+    m_pbrShader->uniform("howManyLights", howManyLights);
+
     m_pbrShader->uniform("useIBL", m_useIBL);
     m_pbrShader->uniform("useCheapIBL", m_useCheapIBL);
     m_pbrShader->uniform("tonemap", m_tonemap);
     m_pbrShader->uniform("useNormalMapping", m_useNormalMapping);
 
-    m_meshes[m_whichMesh]->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
-    m_ground->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
+    m_meshes[m_whichMesh]->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4 + howManyLights);
+    m_ground->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4 + howManyLights);
 
     RenderLights();
 
@@ -381,19 +428,23 @@ void PBRScene::RenderLights()
     m_lightShader->uniform("tonemap", m_tonemap);
     m_lightShader->uniform("view", m_camera.viewMatrix());
 
-    for (unsigned int i = 0; i < m_howManyLights; i++) {
-        glm::vec3 position = m_lights[i].position;
-        glm::vec3 color = m_lights[i].color;
+    for (unsigned int i = 0; i < m_lights.size(); i++) {
+        Light light = m_lights[i];
 
-        glm::mat4 model;
-        model = glm::translate(model, position);
-        model = glm::scale(model, glm::vec3(0.1f));
+        if (light.active) {
+            glm::vec3 position = light.position;
+            glm::vec3 color = light.color;
 
-        m_lightShader->uniform("model", model);
-        m_lightShader->uniform("lightColor", color);
+            glm::mat4 model;
+            model = glm::translate(model, position);
+            model = glm::scale(model, glm::vec3(0.1f));
+
+            m_lightShader->uniform("model", model);
+            m_lightShader->uniform("lightColor", color);
 
 
-        m_cube->draw();
+            m_cube->draw();
+        }
     }
 }
 
