@@ -169,8 +169,6 @@ void PBRScene::OnRender(float t, float dt)
 
     m_pbrShader->use();
 
-    m_pbrShader->uniform("view", m_camera.viewMatrix());
-    m_pbrShader->uniform("projection", m_projection);
     m_pbrShader->uniform("viewPos", m_camera.position());
 
     m_pbrShader->uniform("lights", m_lights);
