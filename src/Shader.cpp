@@ -277,7 +277,9 @@ GLint Shader::GetUniformLocation(const string &name)
     if (itr == uniformLUT.end())
     {
         GLint loc = glGetUniformLocation(m_program, name.c_str());
+#ifdef SHADER_DEBUG
         cout << "Looking up uniform " << name << " with location=" << loc << endl;
+#endif
 
         uniformLUT[name] = loc;
         return loc;
