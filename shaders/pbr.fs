@@ -11,6 +11,11 @@ struct Material {
     sampler2D normalSampler;
 };
 
+struct Light {
+    vec3 position;
+    vec3 color;
+};
+
 uniform samplerCube skyboxSampler;
 uniform samplerCube irradianceSampler;
 uniform samplerCube radianceSampler;
@@ -24,9 +29,8 @@ uniform Material material;
 uniform vec3 viewPos;
 
 #ifdef MAX_LIGHTS
-uniform int lights;
-uniform vec3 lightPositions[MAX_LIGHTS];
-uniform vec3 lightColors[MAX_LIGHTS];
+uniform int howManyLights;
+uniform Light lights[MAX_LIGHTS];
 #endif
 
 in VS_OUT {
@@ -125,13 +129,15 @@ void main()
     vec3 Lo = vec3(0);
 
 #ifdef MAX_LIGHTS
-    for (int i = 0; i < lights; i++) {
+    for (int i = 0; i < howManyLights; i++) {
+        Light light = lights[i];
+
         // calculate per-light radiance
-        vec3 L = normalize(lightPositions[i] - WorldPos);
+        vec3 L = normalize(light.position - WorldPos);
         vec3 H = normalize(V + L);
-        float distance = length(lightPositions[i] - WorldPos);
+        float distance = length(light.position - WorldPos);
         float attenuation = 1.0 / (distance * distance);
-        vec3 radiance = lightColors[i] * attenuation;
+        vec3 radiance = light.color * attenuation;
 
         // Cook-Torrance BRDF
         float NDF = DistributionGGX(N, H, roughness);

@@ -21,12 +21,19 @@ public:
 
 private:
     void RenderSkybox(CubemapPtr skybox);
-    void RenderLamp(glm::vec3 position, glm::vec3 color);
+    void RenderLights();
 
     struct IBL {
         CubemapPtr skybox;
         CubemapPtr irradiance;
         CubemapPtr radiance;
+    };
+
+    struct Light {
+        Light(glm::vec3 _1, glm::vec3 _2) : position(_1), color(_2) { }
+
+        glm::vec3 position;
+        glm::vec3 color;
     };
 
     static IBL loadIBL(std::string name);
@@ -35,7 +42,7 @@ private:
     bool m_bloom;
     bool m_useIBL;
     int m_whichIBL;
-    int m_lights;
+    int m_howManyLights;
     bool m_useCheapIBL;
     int m_whichMesh;
     bool m_useNormalMapping;
@@ -50,7 +57,7 @@ private:
     ShaderPtr m_compositeShader;
 
     ShaderPtr m_skyboxShader;
-    ShaderPtr m_lampShader;
+    ShaderPtr m_lightShader;
 
     std::vector<glm::vec3> m_ssaoKernel;
     ImagePtr m_noiseTexture;
@@ -58,6 +65,8 @@ private:
 
     std::vector<IBL> m_ibls;
     ImagePtr m_brdf;
+
+    std::vector<Light> m_lights;
 
     ImagePtr m_gNormal;
     ImagePtr m_gPosition;

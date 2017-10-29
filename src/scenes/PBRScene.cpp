@@ -12,12 +12,28 @@ PBRScene::PBRScene() : BaseScene()
     m_tonemap = 5;
     m_bloom = true;
     m_useIBL = true;
-    m_lights = 3;
+    m_howManyLights = 3;
     m_whichIBL = 0;
     m_useCheapIBL = false;
     m_whichMesh = 0;
     m_useNormalMapping = true;
     m_useSSAO = true;
+
+    m_lights.push_back(Light(
+        glm::vec3(0.0f, 1.5f, 0.0f),
+        glm::vec3(30.0f)
+    ));
+
+    m_lights.push_back(Light(
+        glm::vec3(-2.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 30.0f, 0.0f)
+    ));
+
+    m_lights.push_back(Light(
+        glm::vec3(2.0f, 1.0f, 0.0f),
+        glm::vec3(30.0f, 00.0f, 0.0f)
+    ));
+
 
     m_geometryShader = ShaderPtr(new Shader("shaders/geometry.vs", "shaders/geometry.fs"));
     m_ssaoShader = ShaderPtr(new Shader("shaders/ssao.vs", "shaders/ssao.fs"));
@@ -28,7 +44,7 @@ PBRScene::PBRScene() : BaseScene()
     m_compositeShader = ShaderPtr(new Shader("shaders/composite.vs", "shaders/composite.fs", { "GAMMA_CORRECT" }));
 
     m_skyboxShader = ShaderPtr(new Shader("shaders/skybox.vs", "shaders/skybox.fs", { "HDR_TONEMAP" }));
-    m_lampShader = ShaderPtr(new Shader("shaders/lamp.vs", "shaders/lamp.fs", { "HDR_TONEMAP" }));
+    m_lightShader = ShaderPtr(new Shader("shaders/light.vs", "shaders/light.fs", { "HDR_TONEMAP" }));
 
     m_ibls.push_back(loadIBL("milkyway"));
     m_ibls.push_back(loadIBL("outside"));
@@ -177,8 +193,8 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
         m_bloom = !m_bloom;
         printf("bloom %s\n", m_bloom ? "true" : "false");
     } else if (action == GLFW_PRESS && key == GLFW_KEY_L) {
-        m_lights = (m_lights + 1) % 4;
-        printf("lights %i\n", m_lights);
+        m_howManyLights = (m_howManyLights + 1) % (m_lights.size() + 1);
+        printf("howManyLights %i\n", m_howManyLights);
     } else if (action == GLFW_PRESS && key == GLFW_KEY_P) {
         m_whichIBL = (m_whichIBL + 1) % m_ibls.size();
         printf("whichIBL %i\n", m_whichIBL);
@@ -249,27 +265,17 @@ void PBRScene::OnRender(float t, float dt)
     RenderSkybox(ibl.skybox);
     glEnable(GL_DEPTH_TEST);
 
-    glm::vec3 lightPositions[3] = {
-        glm::vec3( 0.0f, 1.5f, 0.0f),
-        glm::vec3(-2.0f, 1.0f, 0.0f),
-        glm::vec3( 2.0f, 1.0f, 0.0f)
-    };
-
-    glm::vec3 lightColors[3] = {
-        glm::vec3(30.0f),
-        glm::vec3(0.0f, 30.0f, 0.0f),
-        glm::vec3(30.0f, 0.0f, 0.0f)
-    };
-
     m_pbrShader->use();
 
     m_pbrShader->uniform("viewPos", m_camera.position());
 
-    m_pbrShader->uniform("lights", m_lights);
+    m_pbrShader->uniform("howManyLights", m_howManyLights);
 
-    for (int i = 0; i < 3; i++) {
-        m_pbrShader->uniform("lightPositions[" + std::to_string(i) + "]", lightPositions[i]);
-        m_pbrShader->uniform("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+    for (int i = 0; i < m_lights.size(); i++) {
+        Light light = m_lights[i];
+        std::string prefix = "lights[" + std::to_string(i) + "].";
+        m_pbrShader->uniform(prefix + "position", light.position);
+        m_pbrShader->uniform(prefix + "color", light.color);
     }
 
     ibl.skybox->bind(0);
@@ -290,9 +296,7 @@ void PBRScene::OnRender(float t, float dt)
     m_meshes[m_whichMesh]->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
     m_ground->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
 
-    for (int i = 0; i < m_lights; i++) {
-        RenderLamp(lightPositions[i], lightColors[i]);
-    }
+    RenderLights();
 
     if (true) {
         m_pongFramebuffer->bind();
@@ -370,22 +374,27 @@ void PBRScene::RenderSkybox(CubemapPtr skybox)
     glDepthMask(GL_TRUE);
 }
 
-void PBRScene::RenderLamp(glm::vec3 position, glm::vec3 color)
+void PBRScene::RenderLights()
 {
-    m_lampShader->use();
+    m_lightShader->use();
+    m_lightShader->uniform("projection", m_projection);
+    m_lightShader->uniform("tonemap", m_tonemap);
+    m_lightShader->uniform("view", m_camera.viewMatrix());
 
-    glm::mat4 model;
-    model = glm::translate(model, position);
-    model = glm::scale(model, glm::vec3(0.1f));
+    for (unsigned int i = 0; i < m_howManyLights; i++) {
+        glm::vec3 position = m_lights[i].position;
+        glm::vec3 color = m_lights[i].color;
 
-    m_lampShader->uniform("model", model);
-    m_lampShader->uniform("view", m_camera.viewMatrix());
-    m_lampShader->uniform("projection", m_projection);
+        glm::mat4 model;
+        model = glm::translate(model, position);
+        model = glm::scale(model, glm::vec3(0.1f));
 
-    m_lampShader->uniform("lightColor", color);
-    m_lampShader->uniform("tonemap", m_tonemap);
+        m_lightShader->uniform("model", model);
+        m_lightShader->uniform("lightColor", color);
 
-    m_cube->draw();
+
+        m_cube->draw();
+    }
 }
 
 PBRScene::IBL PBRScene::loadIBL(std::string name)
