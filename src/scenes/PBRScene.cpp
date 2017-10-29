@@ -66,7 +66,7 @@ PBRScene::PBRScene() : BaseScene()
             ImagePtr(new Image("resources/gltf2/BoomBox/BoomBox_normal.png", true)),
             ImagePtr(new Image("resources/gltf2/BoomBox/BoomBox_emissive.png", true))
         )),
-        glm::scale(glm::mat4(1.0f), glm::vec3(70.0f))
+        glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.25f, 0.0f)), glm::vec3(70.0f))
     )));
 
     m_meshes.push_back(MeshPtr(new Mesh(
