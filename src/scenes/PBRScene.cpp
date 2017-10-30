@@ -242,7 +242,7 @@ void PBRScene::OnRender(float t, float dt)
         }
     }
 
-    glViewport(0, 0, 1280, 720);
+    glViewport(0, 0, m_width, m_height);
 
     if (m_useSSAO) {
         m_geometryFramebuffer->bind();
