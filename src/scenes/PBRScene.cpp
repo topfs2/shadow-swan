@@ -22,19 +22,19 @@ PBRScene::PBRScene() : BaseScene()
 
     m_lights.push_back(Light(
         glm::vec3(0.0f, 1.0f, -2.0f),
-        glm::vec3(10.0f),
+        glm::vec3(30.0f),
         FrameBufferPtr(new FrameBuffer(FrameBuffer::ImageVector(), ImagePtr(new Image(SHADOW_SIZE, SHADOW_SIZE, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, NULL, false)), SHADOW_SIZE, SHADOW_SIZE))
     ));
 
     m_lights.push_back(Light(
         glm::vec3(-2.0f, 1.0f, 0.0f),
-        glm::vec3(0.0f, 10.0f, 0.0f),
+        glm::vec3(0.0f, 30.0f, 0.0f),
         FrameBufferPtr(new FrameBuffer(FrameBuffer::ImageVector(), ImagePtr(new Image(SHADOW_SIZE, SHADOW_SIZE, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, NULL, false)), SHADOW_SIZE, SHADOW_SIZE))
     ));
 
     m_lights.push_back(Light(
         glm::vec3(2.0f, 1.0f, 0.0f),
-        glm::vec3(10.0f, 0.0f, 0.0f),
+        glm::vec3(30.0f, 0.0f, 0.0f),
         FrameBufferPtr(new FrameBuffer(FrameBuffer::ImageVector(), ImagePtr(new Image(SHADOW_SIZE, SHADOW_SIZE, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, NULL, false)), SHADOW_SIZE, SHADOW_SIZE))
     ));
 
@@ -220,22 +220,31 @@ void PBRScene::OnKey(int key, int scancode, int action, int mode)
 
 void PBRScene::OnRender(float t, float dt)
 {
+
+    m_lights[0].position = glm::vec3(sinf(t) * 2.0f, 1.0f, cosf(t) * 2.0f);
+
     glViewport(0, 0, SHADOW_SIZE, SHADOW_SIZE);
 
     m_shadowDepthShader->use();
     for (int i = 0; i < m_lights.size(); i++) {
         Light light = m_lights[i];
 
+
         if (light.active) {
             light.framebuffer->bind();
             glClear(GL_DEPTH_BUFFER_BIT);
 
-            GLfloat near_plane = 0.01f, far_plane = 10.0f;
-            glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, near_plane, far_plane);
+            glm::vec3 direction = glm::normalize(-light.position);
+            glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+
+            glm::vec3 right = glm::normalize(glm::cross(direction, worldUp));
+            glm::vec3 up = glm::normalize(glm::cross(right, direction));
+
+            glm::mat4 lightProjection = glm::perspective(45.0f, 1.0f, 0.1f, 10.0f);
 
             glm::mat4 lightView = glm::lookAt(light.position,
-                                              glm::vec3( 0.0f, 0.0f,  0.0f),
-                                              glm::vec3( 0.0f, 1.0f,  0.0f));
+                                              light.position + direction,
+                                              up);
 
             RenderGeometries(m_shadowDepthShader, lightView, lightProjection, 0);
         }
@@ -313,19 +322,31 @@ void PBRScene::OnRender(float t, float dt)
         Light light = m_lights[i];
 
         if (light.active) {
-            GLfloat near_plane = 0.01f, far_plane = 10.0f;
-            glm::mat4 lightProjection = glm::ortho(-5.0f, 5.0f, -5.0f, 5.0f, near_plane, far_plane);
+            glm::vec3 direction = glm::normalize(-light.position);
+            glm::vec3 worldUp(0.0f, 1.0f, 0.0f);
+
+            glm::vec3 right = glm::normalize(glm::cross(direction, worldUp));
+            glm::vec3 up = glm::normalize(glm::cross(right, direction));
+
+            glm::mat4 lightProjection = glm::perspective(45.0f, 1.0f, 0.1f, 10.0f);
 
             glm::mat4 lightView = glm::lookAt(light.position,
-                                              glm::vec3( 0.0f, 0.0f,  0.0f),
-                                              glm::vec3( 0.0f, 1.0f,  0.0f));
+                                              light.position + direction,
+                                              up);
 
             std::string prefix = "lights[" + std::to_string(howManyLights) + "].";
             m_pbrShader->uniform(prefix + "position", light.position);
+            m_pbrShader->uniform(prefix + "direction", direction);
             m_pbrShader->uniform(prefix + "color", light.color);
             m_pbrShader->uniform(prefix + "matrix", lightProjection * lightView);
             m_pbrShader->uniform(prefix + "shadowMapSampler", 4 + howManyLights);
             light.framebuffer->getDepthAttachment()->bind(4 + howManyLights);
+
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+            glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
             howManyLights++;
         }
     }

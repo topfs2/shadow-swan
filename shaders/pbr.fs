@@ -13,6 +13,7 @@ struct Material {
 
 struct Light {
     vec3 position;
+    vec3 direction;
     vec3 color;
     mat4 matrix;
     sampler2D shadowMapSampler;
@@ -182,8 +183,15 @@ void main()
         float NdotL = max(dot(N, L), 0.0);
         float shadow = ShadowCalculation(fs_in.FragPosLightSpace[i], NdotL, lights[i].shadowMapSampler);
 
-        // add to outgoing radiance Lo
-        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
+        float outerCutOff = 0.8;
+        float cutOff = 0.9;
+
+        float theta = dot(L, normalize(-lights[i].direction));
+        float epsilon   = cutOff - outerCutOff;
+        float intensity = clamp((theta - outerCutOff) / epsilon, 0.0, 1.0);
+
+            // add to outgoing radiance Lo
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL * (1.0 - shadow) * intensity;  // note that we already multiplied the BRDF by the Fresnel (kS) so we won't multiply by kS again
     }
 #endif
 
