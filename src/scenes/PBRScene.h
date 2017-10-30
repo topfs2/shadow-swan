@@ -22,6 +22,7 @@ public:
 private:
     void RenderSkybox(CubemapPtr skybox);
     void RenderLights();
+    void RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit);
 
     struct IBL {
         CubemapPtr skybox;

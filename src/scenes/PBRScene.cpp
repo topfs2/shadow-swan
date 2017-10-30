@@ -237,8 +237,7 @@ void PBRScene::OnRender(float t, float dt)
                                               glm::vec3( 0.0f, 0.0f,  0.0f),
                                               glm::vec3( 0.0f, 1.0f,  0.0f));
 
-            m_meshes[m_whichMesh]->draw(m_shadowDepthShader, lightView, lightProjection, glm::mat4(), 0);
-            m_ground->draw(m_shadowDepthShader, lightView, lightProjection, glm::mat4(), 0);
+            RenderGeometries(m_shadowDepthShader, lightView, lightProjection, 0);
         }
     }
 
@@ -252,9 +251,7 @@ void PBRScene::OnRender(float t, float dt)
         m_geometryShader->use();
         m_geometryShader->uniform("useNormalMapping", m_useNormalMapping);
 
-        m_meshes[m_whichMesh]->draw(m_geometryShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
-        m_ground->draw(m_geometryShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4);
-
+        RenderGeometries(m_geometryShader, m_camera.viewMatrix(), m_projection, 0);
 
         m_ssaoFrameBuffer->bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -340,9 +337,7 @@ void PBRScene::OnRender(float t, float dt)
     m_pbrShader->uniform("tonemap", m_tonemap);
     m_pbrShader->uniform("useNormalMapping", m_useNormalMapping);
 
-    m_meshes[m_whichMesh]->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4 + howManyLights);
-    m_ground->draw(m_pbrShader, m_camera.viewMatrix(), m_projection, glm::mat4(), 4 + howManyLights);
-
+    RenderGeometries(m_pbrShader, m_camera.viewMatrix(), m_projection, 4 + howManyLights);
     RenderLights();
 
     if (true) {
@@ -446,6 +441,15 @@ void PBRScene::RenderLights()
             m_cube->draw();
         }
     }
+}
+
+void PBRScene::RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit)
+{
+    shader->uniform("view", view);
+    shader->uniform("projection", projection);
+
+    m_meshes[m_whichMesh]->draw(shader, glm::mat4(), unit);
+    m_ground->draw(shader, glm::mat4(), unit);
 }
 
 PBRScene::IBL PBRScene::loadIBL(std::string name)
