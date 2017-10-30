@@ -480,7 +480,7 @@ PBRScene::IBL PBRScene::loadIBL(std::string name)
     IBL ibl;
 
     ibl.skybox = CubemapPtr(new Cubemap(prefix + "skybox_", ".hdr", true));
-    ibl.radiance = CubemapPtr(new Cubemap(prefix + "radiance_", ".hdr", true));
+    ibl.radiance = CubemapPtr(new Cubemap(prefix + "radiance_", ".hdr", 8));
     ibl.irradiance = CubemapPtr(new Cubemap(prefix + "irradiance_", ".hdr", false));
 
     return ibl;
