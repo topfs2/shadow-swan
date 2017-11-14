@@ -2,6 +2,8 @@
 ## About
 Physically based rendering with HDR lighting with IBL and shadowmapped spot lights, bloom and SSAO.
 
+[![Video](https://img.youtube.com/vi/tepcu3pxtPE/0.jpg)](https://www.youtube.com/watch?v=tepcu3pxtPE)
+
 ## Build
 cmake .
 
