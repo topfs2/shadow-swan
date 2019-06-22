@@ -2,6 +2,7 @@
 
 struct Light {
     vec3 position;
+    vec3 direction;
     vec3 color;
     mat4 matrix;
     sampler2D shadowMapSampler;

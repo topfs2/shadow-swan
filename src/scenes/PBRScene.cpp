@@ -451,7 +451,7 @@ void PBRScene::RenderLights()
             glm::vec3 position = light.position;
             glm::vec3 color = light.color;
 
-            glm::mat4 model;
+            glm::mat4 model(1.0f);
             model = glm::translate(model, position);
             model = glm::scale(model, glm::vec3(0.1f));
 
@@ -469,8 +469,8 @@ void PBRScene::RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 proj
     shader->uniform("view", view);
     shader->uniform("projection", projection);
 
-    m_meshes[m_whichMesh]->draw(shader, glm::mat4(), unit);
-    m_ground->draw(shader, glm::mat4(), unit);
+    m_meshes[m_whichMesh]->draw(shader, glm::mat4(1.0f), unit);
+    m_ground->draw(shader, glm::mat4(1.0f), unit);
 }
 
 PBRScene::IBL PBRScene::loadIBL(std::string name)
