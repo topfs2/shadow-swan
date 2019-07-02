@@ -1,8 +1,6 @@
 #pragma once
 #include "IScene.h"
 #include "../TrackballCamera.h"
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
 
 class BaseScene : public IScene
 {

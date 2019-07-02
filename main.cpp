@@ -1,9 +1,9 @@
-#define GLEW_STATIC
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "src/scenes/SceneFactory.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <iostream>
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -41,8 +41,12 @@ int main(int argc, const char **argv)
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-    glewExperimental = GL_TRUE;
-    glewInit();
+
+    if(!gladLoadGL()) {
+        std::cerr << "GLAD Failed to load GL" << std::endl;
+        return -1;
+    }
+    std::cout << "OpenGL " << GLVersion.major << "." << GLVersion.minor << std::endl;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);

@@ -2,7 +2,7 @@
 #include <memory>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <GL/glew.h>
+#include <glad/glad.h>
 #include <vector>
 
 class GeometryData {  

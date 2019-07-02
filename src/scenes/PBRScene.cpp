@@ -6,6 +6,7 @@
 #include <string>
 #include <random>
 #include <iostream>
+#include <GLFW/glfw3.h>
 
 #define SHADOW_SIZE 512
 
