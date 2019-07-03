@@ -15,3 +15,10 @@ target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/glfw)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/assimp)
+
+add_library(imgui
+  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_draw.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/imgui/imgui_widgets.cpp
+)
+target_include_directories(imgui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/imgui)

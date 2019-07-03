@@ -1,9 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "src/scenes/SceneFactory.h"
+#include "scenes/SceneFactory.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <iostream>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -22,7 +25,7 @@ int main(int argc, const char **argv) {
     // Init GLFW
     glfwInit();
     // Set all the required options for GLFW
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
@@ -40,12 +43,16 @@ int main(int argc, const char **argv) {
     glfwSetKeyCallback(window, key_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
 
-
     if(!gladLoadGL()) {
         std::cerr << "GLAD Failed to load GL" << std::endl;
         return -1;
     }
-    std::cout << "OpenGL " << GLVersion.major << "." << GLVersion.minor << std::endl;
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, false);
+    ImGui_ImplOpenGL3_Init("#version 120");
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -60,18 +67,32 @@ int main(int argc, const char **argv) {
         GLfloat deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Text("OpenGL %d.%d\n", GLVersion.major, GLVersion.minor);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
         glfwPollEvents();
         scene->OnRender(currentFrame, deltaTime);
 
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(window);
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
     return 0;
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     } else {
         scene->OnKey(key, scancode, action, mode);
