@@ -8,6 +8,7 @@ set(LIBRARIES
   assimp
   stb
   glm
+  gli
   glad
   dl
 )

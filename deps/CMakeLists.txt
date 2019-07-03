@@ -6,6 +6,9 @@ target_include_directories(stb INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/stb)
 add_library(glm INTERFACE)
 target_include_directories(glm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glm)
 
+add_library(gli INTERFACE)
+target_include_directories(gli INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/gli)
+
 add_library(glad ${CMAKE_CURRENT_SOURCE_DIR}/glad/src/glad.c)
 target_include_directories(glad PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glad/include)
 
