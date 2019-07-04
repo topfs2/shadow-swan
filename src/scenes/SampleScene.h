@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseScene.h"
-#include "../Image.h"
+#include "../Texture.h"
 #include "../Geometry.h"
 #include "../Shader.h"
 
@@ -15,6 +15,6 @@ public:
 
 private:
     ShaderPtr m_shader;
-    ImagePtr m_texture;
+    TexturePtr m_texture;
     GeometryPtr m_quad;
 };

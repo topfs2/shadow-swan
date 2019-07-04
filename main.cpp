@@ -16,8 +16,7 @@ glm::vec2 last((float)WINDOW_WIDTH * 0.5f, (float)WINDOW_HEIGHT * 0.5f);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
-int main(int argc, const char **argv)
-{
+int main(int argc, const char **argv) {
     stbi_set_flip_vertically_on_load(false);
 
     // Init GLFW
@@ -51,13 +50,12 @@ int main(int argc, const char **argv)
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-    scene = SceneFactory::create(argc > 1 ? argv[1] : "pbr");
+    scene = SceneFactory::create(argc > 1 ? argv[1] : "sample");
     scene->OnResize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     GLfloat lastFrame = glfwGetTime();
 
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
         GLfloat currentFrame = glfwGetTime();
         GLfloat deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
@@ -72,8 +70,7 @@ int main(int argc, const char **argv)
     return 0;
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     } else {
@@ -81,8 +78,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
-void mouse_callback(GLFWwindow* window, double x, double y)
-{
+void mouse_callback(GLFWwindow* window, double x, double y) {
     glm::vec2 position((float)x, float(y));
     glm::vec2 offset(position.x - last.x, last.y - position.y); // Reversed Y since y-coordinates go from bottom to left
 
