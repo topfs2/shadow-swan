@@ -7,20 +7,11 @@
 #include <random>
 #include <iostream>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 
 #define SHADOW_SIZE 512
 
-PBRScene::PBRScene() : BaseScene()
-{
-    m_tonemap = 5;
-    m_bloom = true;
-    m_useIBL = true;
-    m_whichIBL = 0;
-    m_useCheapIBL = false;
-    m_whichMesh = 0;
-    m_useNormalMapping = true;
-    m_useSSAO = true;
-
+PBRScene::PBRScene() : BaseScene() {
     m_lights.push_back(Light(
         glm::vec3(0.0f, 1.0f, -2.0f),
         glm::vec3(30.0f),
@@ -151,13 +142,9 @@ PBRScene::PBRScene() : BaseScene()
     m_noiseTexture = ImagePtr(new Image(4, 4, GL_RGB16F, GL_RGB, GL_FLOAT, &ssaoNoise[0], false, GL_NEAREST, GL_NEAREST, GL_REPEAT, GL_REPEAT));
 }
 
-PBRScene::~PBRScene()
-{
+PBRScene::~PBRScene() { }
 
-}
-
-void PBRScene::OnResize(unsigned int width, unsigned int height)
-{
+void PBRScene::OnResize(unsigned int width, unsigned int height) {
     BaseScene::OnResize(width, height);
 
     m_gColorOutput = ImagePtr(new Image(width, height, GL_RGB16F, GL_RGB, GL_FLOAT, NULL, false));
@@ -186,41 +173,32 @@ void PBRScene::OnResize(unsigned int width, unsigned int height)
     m_noiseScale = size / 4.0f;
 }
 
-void PBRScene::OnKey(int key, int scancode, int action, int mode)
-{
-    if (action == GLFW_PRESS && key >= GLFW_KEY_1 && key <= GLFW_KEY_3) {
-        int i = key - GLFW_KEY_1;
-        m_lights[i].active = !m_lights[i].active;
-        printf("light %i %s\n", i, m_lights[i].active ? "active" : "inactive");
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_I) {
-        m_useIBL = !m_useIBL;
-        printf("useIBL %s\n", m_useIBL ? "true" : "false");
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_C) {
-        m_useCheapIBL = !m_useCheapIBL;
-        printf("useCheapIBL %s\n", m_useCheapIBL ? "true" : "false");
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_B) {
-        m_bloom = !m_bloom;
-        printf("bloom %s\n", m_bloom ? "true" : "false");
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_T) {
-        m_tonemap = (m_tonemap + 1) % 6;
-        printf("tonemap %i\n", m_tonemap);
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_P) {
-        m_whichIBL = (m_whichIBL + 1) % m_ibls.size();
-        printf("whichIBL %i\n", m_whichIBL);
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_M) {
-        m_whichMesh = (m_whichMesh + 1) % m_meshes.size();
-        printf("whichMesh %i\n", m_whichMesh);
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_N) {
-        m_useNormalMapping = !m_useNormalMapping;
-        printf("useNormalMapping %s\n", m_useNormalMapping ? "true" : "false");
-    } else if (action == GLFW_PRESS && key == GLFW_KEY_S) {
-        m_useSSAO = !m_useSSAO;
-        printf("useSSAO %s\n", m_useSSAO ? "true" : "false");
-    }
-}
+void PBRScene::OnKey(int key, int scancode, int action, int mode) { }
 
-void PBRScene::OnRender(float t, float dt)
-{
+void PBRScene::OnRender(float t, float dt) {
+    static int whichTonemap = 5;
+    static bool useBloom = true;
+    static bool useIBL = true;
+    static int whichIBL = 0;
+    static bool useCheapIBL = false;
+    static int whichMesh = 0;
+    static bool useNormalMapping = true;
+    static bool useSSAO = true;
+
+    ImGui::Checkbox("Use Bloom", &useBloom);
+    ImGui::Checkbox("Use IBL", &useIBL);
+    ImGui::Checkbox("Use Cheap IBL", &useCheapIBL);
+    ImGui::Checkbox("Use Normal Mapping", &useNormalMapping);
+    ImGui::Checkbox("Use SSAO", &useSSAO);
+    
+    const char* tonemap_items[] = { "linear", "simpleReinhard", "lumaBasedReinhard", "RomBinDaHouse", "filmic", "Uncharted2" };
+    ImGui::ListBox("Tonemap", &whichTonemap, tonemap_items, IM_ARRAYSIZE(tonemap_items), IM_ARRAYSIZE(tonemap_items));
+
+    const char* ibl_items[] = { "milkyway", "outside", "arches" };
+    ImGui::ListBox("IBL", &whichIBL, ibl_items, IM_ARRAYSIZE(ibl_items), IM_ARRAYSIZE(ibl_items));
+
+    const char* mesh_items[] = { "DamagedHelmet", "Corsett", "BoomBox", "Telephone" };
+    ImGui::ListBox("Mesh", &whichMesh, mesh_items, IM_ARRAYSIZE(mesh_items), IM_ARRAYSIZE(mesh_items));
 
     m_lights[0].position = glm::vec3(sinf(t) * 2.0f, 1.0f, cosf(t) * 2.0f);
 
@@ -228,8 +206,10 @@ void PBRScene::OnRender(float t, float dt)
 
     m_shadowDepthShader->use();
     for (int i = 0; i < m_lights.size(); i++) {
-        Light light = m_lights[i];
+        Light &light = m_lights[i];
 
+        std::string s = "Light " + std::to_string(i) + " active";
+        ImGui::Checkbox(s.c_str(), &m_lights[i].active);
 
         if (light.active) {
             light.framebuffer->bind();
@@ -247,21 +227,21 @@ void PBRScene::OnRender(float t, float dt)
                                               light.position + direction,
                                               up);
 
-            RenderGeometries(m_shadowDepthShader, lightView, lightProjection, 0);
+            RenderGeometries(m_shadowDepthShader, lightView, lightProjection, 0, whichMesh);
         }
     }
 
     glViewport(0, 0, m_width, m_height);
 
-    if (m_useSSAO) {
+    if (useSSAO) {
         m_geometryFramebuffer->bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         m_geometryShader->use();
-        m_geometryShader->uniform("useNormalMapping", m_useNormalMapping);
+        m_geometryShader->uniform("useNormalMapping", useNormalMapping);
 
-        RenderGeometries(m_geometryShader, m_camera.viewMatrix(), m_projection, 0);
+        RenderGeometries(m_geometryShader, m_camera.viewMatrix(), m_projection, 0, whichMesh);
 
         m_ssaoFrameBuffer->bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -299,9 +279,9 @@ void PBRScene::OnRender(float t, float dt)
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    IBL ibl = m_ibls[m_whichIBL];
+    IBL ibl = m_ibls[whichIBL];
 
-    RenderSkybox(ibl.skybox);
+    RenderSkybox(ibl.skybox, whichTonemap);
     glEnable(GL_DEPTH_TEST);
 
     m_pbrShader->use();
@@ -354,13 +334,13 @@ void PBRScene::OnRender(float t, float dt)
 
     m_pbrShader->uniform("howManyLights", howManyLights);
 
-    m_pbrShader->uniform("useIBL", m_useIBL);
-    m_pbrShader->uniform("useCheapIBL", m_useCheapIBL);
-    m_pbrShader->uniform("tonemap", m_tonemap);
-    m_pbrShader->uniform("useNormalMapping", m_useNormalMapping);
+    m_pbrShader->uniform("useIBL", useIBL);
+    m_pbrShader->uniform("useCheapIBL", useCheapIBL);
+    m_pbrShader->uniform("tonemap", whichTonemap);
+    m_pbrShader->uniform("useNormalMapping", useNormalMapping);
 
-    RenderGeometries(m_pbrShader, m_camera.viewMatrix(), m_projection, 4 + howManyLights);
-    RenderLights();
+    RenderGeometries(m_pbrShader, m_camera.viewMatrix(), m_projection, 4 + howManyLights, whichMesh);
+    RenderLights(whichTonemap);
 
     if (true) {
         m_pongFramebuffer->bind();
@@ -413,14 +393,13 @@ void PBRScene::OnRender(float t, float dt)
     m_compositeShader->uniform("brightInput", 1);
     m_compositeShader->uniform("ssaoSampler", 2);
 
-    m_compositeShader->uniform("bloom", m_bloom);
-    m_compositeShader->uniform("useSSAO", m_useSSAO);
+    m_compositeShader->uniform("bloom", useBloom);
+    m_compositeShader->uniform("useSSAO", useSSAO);
 
     m_fsQuad->draw();
 }
 
-void PBRScene::RenderSkybox(CubemapPtr skybox)
-{
+void PBRScene::RenderSkybox(CubemapPtr skybox, int tonemap) {
     glDepthMask(GL_FALSE);
 
     m_skyboxShader->use();
@@ -428,7 +407,7 @@ void PBRScene::RenderSkybox(CubemapPtr skybox)
     m_skyboxShader->uniform("view", m_camera.viewMatrixSkybox());
     m_skyboxShader->uniform("projection", m_projection);
 
-    m_skyboxShader->uniform("tonemap", m_tonemap);
+    m_skyboxShader->uniform("tonemap", tonemap);
 
     skybox->bind(0);
     m_skyboxShader->uniform("skybox", 0);
@@ -438,11 +417,10 @@ void PBRScene::RenderSkybox(CubemapPtr skybox)
     glDepthMask(GL_TRUE);
 }
 
-void PBRScene::RenderLights()
-{
+void PBRScene::RenderLights(int tonemap) {
     m_lightShader->use();
     m_lightShader->uniform("projection", m_projection);
-    m_lightShader->uniform("tonemap", m_tonemap);
+    m_lightShader->uniform("tonemap", tonemap);
     m_lightShader->uniform("view", m_camera.viewMatrix());
 
     for (unsigned int i = 0; i < m_lights.size(); i++) {
@@ -465,12 +443,12 @@ void PBRScene::RenderLights()
     }
 }
 
-void PBRScene::RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit)
+void PBRScene::RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit, int whichMesh)
 {
     shader->uniform("view", view);
     shader->uniform("projection", projection);
 
-    m_meshes[m_whichMesh]->draw(shader, glm::mat4(1.0f), unit);
+    m_meshes[whichMesh]->draw(shader, glm::mat4(1.0f), unit);
     m_ground->draw(shader, glm::mat4(1.0f), unit);
 }
 

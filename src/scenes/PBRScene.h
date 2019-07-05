@@ -14,15 +14,13 @@ public:
     virtual ~PBRScene();
 
     virtual void OnResize(unsigned int width, unsigned int height);
-
     virtual void OnKey(int key, int scancode, int action, int mode);
-
     virtual void OnRender(float t, float dt);
 
 private:
-    void RenderSkybox(CubemapPtr skybox);
-    void RenderLights();
-    void RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit);
+    void RenderSkybox(CubemapPtr skybox, int tonemap);
+    void RenderLights(int tonemap);
+    void RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit, int whichMesh);
 
     struct IBL {
         CubemapPtr skybox;
@@ -40,15 +38,6 @@ private:
     };
 
     static IBL loadIBL(std::string name);
-
-    int m_tonemap;
-    bool m_bloom;
-    bool m_useIBL;
-    int m_whichIBL;
-    bool m_useCheapIBL;
-    int m_whichMesh;
-    bool m_useNormalMapping;
-    bool m_useSSAO;
 
     ShaderPtr m_shadowDepthShader;
     ShaderPtr m_geometryShader;
