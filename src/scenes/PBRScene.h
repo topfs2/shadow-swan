@@ -20,7 +20,7 @@ public:
 private:
     void RenderSkybox(CubemapPtr skybox, int tonemap);
     void RenderLights(int tonemap);
-    void RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit, int whichMesh);
+    void RenderGeometries(ShaderPtr shader, glm::mat4 view, glm::mat4 projection, GLuint unit);
 
     struct IBL {
         CubemapPtr skybox;
@@ -58,8 +58,8 @@ private:
     unsigned int m_width;
     unsigned int m_height;
 
-    std::vector<IBL> m_ibls;
     ImagePtr m_brdf;
+    IBL m_ibl;
 
     std::vector<Light> m_lights;
 
@@ -85,6 +85,8 @@ private:
     GeometryPtr m_fsQuad;
     GeometryPtr m_cube;
 
-    std::vector<MeshPtr> m_meshes;
+    ImagePtr m_black;
+
+    MeshPtr m_mesh;
     MeshPtr m_ground;
 };
