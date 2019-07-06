@@ -92,6 +92,10 @@ int main(int argc, const char **argv) {
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
+    if (ImGui::GetIO().WantCaptureKeyboard) {
+        return;
+    }
+
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     } else {
@@ -100,6 +104,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 
 void mouse_callback(GLFWwindow* window, double x, double y) {
+    if (ImGui::GetIO().WantCaptureMouse) {
+        return;
+    }
+
     glm::vec2 position((float)x, float(y));
     glm::vec2 offset(position.x - last.x, last.y - position.y); // Reversed Y since y-coordinates go from bottom to left
 
