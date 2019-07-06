@@ -10,7 +10,6 @@ public:
     SampleScene();
     virtual ~SampleScene();
 
-    virtual void OnKey(int key, int scancode, int action, int mode);
     virtual void OnRender(float t, float dt);
 
 private:

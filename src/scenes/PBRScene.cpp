@@ -137,8 +137,6 @@ void PBRScene::OnResize(unsigned int width, unsigned int height) {
     m_noiseScale = size / 4.0f;
 }
 
-void PBRScene::OnKey(int key, int scancode, int action, int mode) { }
-
 void PBRScene::OnRender(float t, float dt) {
     static int whichTonemap = 5;
     static bool useIBL = true;

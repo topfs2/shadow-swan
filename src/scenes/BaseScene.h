@@ -9,6 +9,7 @@ public:
     virtual ~BaseScene();
 
     virtual void OnResize(unsigned int width, unsigned int height);
+    virtual void OnKey(int key, int scancode, int action, int mode);
     virtual void OnMouseMove(glm::vec2 position, glm::vec2 offset);
 
 protected:
