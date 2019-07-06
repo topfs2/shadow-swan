@@ -57,7 +57,7 @@ int main(int argc, const char **argv) {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-    scene = SceneFactory::create(argc > 1 ? argv[1] : "sample");
+    scene = SceneFactory::create(argc > 1 ? argv[1] : "terrain");
     scene->OnResize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
     GLfloat lastFrame = glfwGetTime();

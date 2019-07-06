@@ -11,8 +11,9 @@ public:
     struct vertex_t
     {
         vertex_t() : position(0), normal(0), uv(0), tangent(0), bitangent(0) { }
-        vertex_t(glm::vec3 _p, glm::vec3 _n, glm::vec2 _uv) : position(_p), normal(_n), uv(_uv), tangent(0), bitangent(0) { }
-        vertex_t(glm::vec3 _p, glm::vec3 _n, glm::vec2 _uv, glm::vec3 _t, glm::vec3 _b) : position(_p), normal(_n), uv(_uv), tangent(_t), bitangent(_b) { }
+        vertex_t(const glm::vec3 &_p) : position(_p), normal(0), uv(0), tangent(0), bitangent(0) { }
+        vertex_t(const glm::vec3 &_p, const glm::vec3 &_n, const glm::vec2 &_uv) : position(_p), normal(_n), uv(_uv), tangent(0), bitangent(0) { }
+        vertex_t(const glm::vec3 &_p, const glm::vec3 &_n, const glm::vec2 &_uv, const glm::vec3 &_t, const glm::vec3 &_b) : position(_p), normal(_n), uv(_uv), tangent(_t), bitangent(_b) { }
 
         glm::vec3 position;
         glm::vec3 normal;
