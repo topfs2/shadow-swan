@@ -6,6 +6,7 @@
 #include <assimp/version.h>
 #include <assimp/cimport.h>
 #include <iostream>
+#include "GeometryData.h"
 
 using namespace std;
 
@@ -36,33 +37,31 @@ std::vector<GeometryPtr> ModelLoader::loadGeometries(const std::string &path) {
 }
 
 GeometryPtr ModelLoader::loadGeometry(const aiMesh *mesh) {
-    GeometryDataPtr geometryData(new GeometryData(mesh->mNumVertices, mesh->mNumFaces * 3));
+    GeometryData geometryData(mesh->mNumVertices, mesh->mNumFaces * 3);
 
     cout << "faces=" << mesh->HasFaces() << " normals=" << mesh->HasNormals() << " positions=" << mesh->HasPositions() << " tangents=" << mesh->HasTangentsAndBitangents() << " uvs=" << mesh->HasTextureCoords(0) << endl;
 
-    for(GLuint i = 0; i < mesh->mNumVertices; i++)
-    {
-        geometryData->position(i, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+    for(GLuint i = 0; i < mesh->mNumVertices; i++) {
+        geometryData.position(i, mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 
         if (mesh->HasNormals()) {
-            geometryData->normal(i, mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+            geometryData.normal(i, mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
         }
 
         if (mesh->HasTangentsAndBitangents()) {
-            geometryData->tangent(i, mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
-            geometryData->bitangent(i, mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
+            geometryData.tangent(i, mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z);
+            geometryData.bitangent(i, mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z);
         }
 
         if (mesh->HasTextureCoords(0)) {
-            geometryData->uv(i, mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+            geometryData.uv(i, mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
         }
     }
 
-    for(GLuint i = 0; i < mesh->mNumFaces; i++)
-    {
+    for(GLuint i = 0; i < mesh->mNumFaces; i++) {
         aiFace face = mesh->mFaces[i];
-        geometryData->triangle(i, face.mIndices[0], face.mIndices[1], face.mIndices[2]);
+        geometryData.triangle(i, face.mIndices[0], face.mIndices[1], face.mIndices[2]);
     }
 
-    return GeometryPtr(new Geometry(geometryData));
+    return geometryData.build();
 }
