@@ -5,9 +5,12 @@ Physically based rendering with HDR lighting with IBL and shadowmapped spot ligh
 [![Video](https://img.youtube.com/vi/tepcu3pxtPE/0.jpg)](https://www.youtube.com/watch?v=tepcu3pxtPE)
 
 ## Build
-cmake .
-
-make
+```
+mkdir build
+cd build
+cmake ..
+make -j8
+```
 
 ## Credits
 None of the textures or models are made by me, and are owned by the respective artists and may be under a different license than this source code
